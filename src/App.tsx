@@ -1,7 +1,13 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  type FormEvent,
+  useRef,
+  useEffect, // Added useEffect
+} from "react";
 import { nanoid } from "nanoid";
 
-// Import our new stylesheets
+// Import our stylesheets
 import "./index.css";
 import "./App.css";
 
@@ -12,7 +18,6 @@ type N8nMessage = {
   content: string;
 };
 
-// Represents a single saved conversation in the sidebar
 type ConversationHistory = {
   id: string;
   title: string;
@@ -23,7 +28,15 @@ type ConversationHistory = {
 const N8N_CHAT_API =
   import.meta.env.VITE_N8N_CHAT_API || "YOUR_FALLBACK_WEBHOOK_URL";
 
+// --- [SUGGESTIONS ARRAY] ---
+const suggestions = [
+    "How is the onboarding process at Helios?",
+  "What is Helios about?",
+  "What are the main benefits or working at Helios?"
+];
+
 // --- [UI COMPONENTS (Inline SVGs)] ---
+// ... (TypingIndicator, SendIcon, MenuIcon, PlusIcon, XIcon are the same)
 const TypingIndicator = () => (
   <div className="message assistant">
     <div className="typing-indicator">
@@ -104,26 +117,63 @@ const XIcon = () => (
   </svg>
 );
 
+// --- [NEW] Arrow Icons for Scroller ---
+const ArrowLeftIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);
+
+const ArrowRightIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
+
 // --- [MAIN COMPONENT] ---
 export default function App() {
   const [messages, setMessages] = useState<N8nMessage[]>([]);
   const [text, setText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // New state for UI and conversation history
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false); // Track first interaction
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<
     ConversationHistory[]
-  >([]); // Start with no history
+  >([]);
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
+  
+  // --- [NEW] State for scroll arrows ---
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const suggestionBarRef = useRef<HTMLDivElement>(null); // Ref for the suggestion bar
 
-  // Auto-scroll logic
+  // ... (scrollToBottom, useEffects for scrolling/convos are the same)
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -132,7 +182,6 @@ export default function App() {
     scrollToBottom();
   }, [messages]);
 
-  // Load active conversation messages when ID changes
   useEffect(() => {
     if (activeConversationId) {
       const conv = conversationHistory.find((c) => c.id === activeConversationId);
@@ -140,49 +189,91 @@ export default function App() {
         setMessages(conv.messages);
       }
     } else {
-      setMessages([]); // Clear messages for a new chat
+      setMessages([]);
     }
   }, [activeConversationId, conversationHistory]);
 
+  // --- [NEW] useEffect for managing scroll arrow visibility ---
+  useEffect(() => {
+    const slider = suggestionBarRef.current;
+    if (!slider) return;
+
+    // This function checks the scroll state
+    const checkScroll = () => {
+      // A small buffer (1px) accounts for subpixel rendering
+      const scrollLeft = Math.ceil(slider.scrollLeft);
+      const scrollWidth = slider.scrollWidth;
+      const clientWidth = slider.clientWidth;
+
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+    };
+
+    // Check scroll on mount, on scroll, and on resize
+    const handleScroll = () => checkScroll();
+    const resizeObserver = new ResizeObserver(checkScroll);
+    
+    slider.addEventListener("scroll", handleScroll);
+    resizeObserver.observe(slider);
+
+    // Initial check (needs a tiny delay for DOM to be ready)
+    const timer = setTimeout(checkScroll, 100);
+
+    // Cleanup
+    return () => {
+      clearTimeout(timer);
+      slider.removeEventListener("scroll", handleScroll);
+      resizeObserver.disconnect();
+    };
+  }, [messages.length]); // Re-run this effect if the message list changes (which shows/hides the bar)
+
+
+  // --- [NEW] Handlers for the arrow buttons ---
+  const handleScrollLeft = () => {
+    suggestionBarRef.current?.scrollBy({ left: -200, behavior: "smooth" });
+  };
+
+  const handleScrollRight = () => {
+    suggestionBarRef.current?.scrollBy({ left: 200, behavior: "smooth" });
+  };
+
+  // ... (startNewConversation, loadConversation, toggleSidebar are the same)
   const startNewConversation = useCallback(() => {
     setActiveConversationId(null);
     setMessages([]);
     setText("");
     setIsLoading(false);
     setError(null);
-    setHasInteracted(true); // Treat starting new as an interaction
-    setIsSidebarOpen(false); // Close sidebar on mobile
+    setHasInteracted(true);
+    setIsSidebarOpen(false);
   }, []);
 
   const loadConversation = useCallback((convId: string) => {
     setActiveConversationId(convId);
     setHasInteracted(true);
-    setIsSidebarOpen(false); // Close sidebar when loading one
+    setIsSidebarOpen(false);
   }, []);
 
-  // Toggle sidebar and mark as interacted
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
     setHasInteracted(true);
   }, []);
 
-  // Main submit handler
-  const handleSubmit = useCallback(
-    async (e : any) => {
-      e.preventDefault();
+  // ... (handleSend, handleSubmit, handleSuggestionClick are the same)
+  const handleSend = useCallback(
+    async (messageContent: string) => {
+      if (!messageContent.trim() || isLoading) return;
 
-      if (!text.trim() || isLoading) return;
-
-      setHasInteracted(true); // Mark interaction
+      setHasInteracted(true);
       setError(null);
+      setText("");
 
       const userMessage: N8nMessage = {
         id: nanoid(),
         role: "user",
-        content: text,
+        content: messageContent,
       };
 
-      // Find the message history to send to n8n
       const currentMessages = activeConversationId
         ? conversationHistory.find((c) => c.id === activeConversationId)?.messages || []
         : messages;
@@ -196,12 +287,11 @@ export default function App() {
       };
 
       setMessages((prev) => [...prev, userMessage, loadingMessage]);
-      setText("");
       setIsLoading(true);
 
       if (!N8N_CHAT_API || N8N_CHAT_API === "YOUR_FALLBACK_WEBHOOK_URL") {
         setError("Chat service is not configured.");
-        setMessages(n8nMessageList); // Remove loader
+        setMessages(n8nMessageList);
         setIsLoading(false);
         return;
       }
@@ -223,44 +313,49 @@ export default function App() {
           throw new Error("Invalid response structure from n8n");
         }
 
-        setMessages(result.messages); // Update the live chat
+        setMessages(result.messages);
 
-        // Save/Update conversation history
         setConversationHistory((prevHistory) => {
           let updatedHistory = [...prevHistory];
-          
           if (activeConversationId) {
-            // Update existing conversation
-            updatedHistory = updatedHistory.map(conv => 
+            updatedHistory = updatedHistory.map((conv) =>
               conv.id === activeConversationId
                 ? { ...conv, messages: result.messages }
                 : conv
             );
           } else {
-            // Create a new conversation
             const newConvId = nanoid();
-            const newTitle = result.messages[0]?.content.substring(0, 30) + "..." || "New Chat";
-            updatedHistory.unshift({ // Add to the top
+            const newTitle =
+              result.messages[0]?.content.substring(0, 30) + "..." || "New Chat";
+            updatedHistory.unshift({
               id: newConvId,
               title: newTitle,
               messages: result.messages,
             });
-            setActiveConversationId(newConvId); // Set the new conversation as active
+            setActiveConversationId(newConvId);
           }
           return updatedHistory;
         });
-
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "An unknown error occurred.";
         setError(`Sorry, I had trouble connecting: ${errorMessage}`);
-        setMessages(n8nMessageList); // Rollback to pre-submit state
+        setMessages(n8nMessageList);
       } finally {
         setIsLoading(false);
       }
     },
-    [messages, isLoading, text, activeConversationId, conversationHistory],
+    [messages, isLoading, activeConversationId, conversationHistory]
   );
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    handleSend(text);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    handleSend(suggestion);
+  };
 
   return (
     <div
@@ -268,13 +363,19 @@ export default function App() {
         isSidebarOpen ? "sidebar-open" : ""
       }`}
     >
-      {/* Sidebar */}
+      {/* ... (Sidebar and Main Chat Area JSX are the same) ... */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <button className="sidebar-button new-chat-button" onClick={startNewConversation}>
+          <button
+            className="sidebar-button new-chat-button"
+            onClick={startNewConversation}
+          >
             <PlusIcon /> New Chat
           </button>
-          <button className="sidebar-button close-sidebar-button" onClick={toggleSidebar}>
+          <button
+            className="sidebar-button close-sidebar-button"
+            onClick={toggleSidebar}
+          >
             <XIcon />
           </button>
         </div>
@@ -285,7 +386,9 @@ export default function App() {
           {conversationHistory.map((conv) => (
             <button
               key={conv.id}
-              className={`conversation-item ${activeConversationId === conv.id ? "active" : ""}`}
+              className={`conversation-item ${
+                activeConversationId === conv.id ? "active" : ""
+              }`}
               onClick={() => loadConversation(conv.id)}
             >
               {conv.title}
@@ -293,29 +396,28 @@ export default function App() {
           ))}
         </div>
       </aside>
-      
-      {/* Click-to-close overlay for mobile */}
+
       <div className="sidebar-overlay" onClick={toggleSidebar}></div>
 
-      {/* Main Chat Area */}
       <main className="main-chat-area">
-        {/* Header with sidebar toggle */}
         <header className="chat-header">
-          <button className="sidebar-button sidebar-toggle-button" onClick={toggleSidebar}>
+          <button
+            className="sidebar-button sidebar-toggle-button"
+            onClick={toggleSidebar}
+          >
             <MenuIcon />
           </button>
           <div className="chat-header-title">
             <h1>Huddle Assistant</h1>
-            <p>Here to answer your queries</p>
+            <p>Here to answer all of your questions</p>
           </div>
         </header>
 
-        {/* Message display area */}
         <div className="message-list-container">
           <div className="message-list">
             {messages.length === 0 && !isLoading && !error && (
               <div className="welcome-message">
-                <h2>How can i help you today ?</h2>
+                <h2>Chatbot</h2>
                 <p>Start a new conversation or select one from the sidebar.</p>
               </div>
             )}
@@ -344,8 +446,46 @@ export default function App() {
           </div>
         </div>
 
-        {/* Text input form */}
+        {/* [UPDATED] Footer with new suggestion container */}
         <footer className="chat-footer">
+          {messages.length === 0 && !isLoading && (
+            <div className="suggestion-container">
+              {/* --- [NEW] Left Arrow --- */}
+              <button
+                className="scroll-arrow left"
+                onClick={handleScrollLeft}
+                disabled={!canScrollLeft}
+                aria-label="Scroll left"
+              >
+                <ArrowLeftIcon />
+              </button>
+
+              {/* --- The original suggestion bar --- */}
+              <div className="suggestion-bar" ref={suggestionBarRef}>
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    className="suggestion-chip"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+
+              {/* --- [NEW] Right Arrow --- */}
+              <button
+                className="scroll-arrow right"
+                onClick={handleScrollRight}
+                disabled={!canScrollRight}
+                aria-label="Scroll right"
+              >
+                <ArrowRightIcon />
+              </button>
+            </div>
+          )}
+
+          {/* --- The original chat form --- */}
           <form onSubmit={handleSubmit} className="chat-form">
             <input
               type="text"
@@ -360,11 +500,7 @@ export default function App() {
               className="chat-submit"
               disabled={isLoading || !text.trim()}
             >
-              {isLoading ? (
-                <div className="spinner"></div>
-              ) : (
-                <SendIcon />
-              )}
+              {isLoading ? <div className="spinner"></div> : <SendIcon />}
             </button>
           </form>
         </footer>
