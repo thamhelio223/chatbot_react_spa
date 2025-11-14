@@ -1,20 +1,194 @@
-/* --- Header --- */
-.chat-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-background);
-  z-index: 10;
+/* --- Layout: Sidebar and Main --- */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-sidebar-border);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
+  
+  /* Sidebar transition */
+  position: absolute;
+  height: 100%;
+  left: 0;
+  top: 0;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 100;
 }
 
-.chat-header h1 {
-  font-size: 1.25rem;
+.main-chat-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative; /* Needed for layout */
+  overflow: hidden; /* Ensures footer sticks */
+  transition: margin-left 0.3s ease;
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+/* --- Sidebar Open State --- */
+.sidebar-open .sidebar {
+  transform: translateX(0);
+}
+
+.sidebar-open .sidebar-overlay {
+  display: block;
+}
+
+/* On desktop, push the content when sidebar is open */
+@media (min-width: 768px) {
+  .sidebar {
+    position: relative; /* Not absolute */
+    transform: translateX(0);
+    transition: width 0.3s ease, margin-left 0.3s ease, padding 0.3s ease;
+  }
+  
+  /* Start with sidebar closed on desktop */
+  .sidebar {
+    width: 0;
+    padding: 1rem 0;
+    overflow: hidden;
+    border-right: none;
+  }
+
+  .sidebar-open .sidebar {
+    width: var(--sidebar-width);
+    padding: 1rem;
+    border-right: 1px solid var(--color-sidebar-border);
+  }
+
+  .sidebar-overlay {
+    display: none; /* No overlay on desktop */
+  }
+  
+  /* Hide close button on desktop, show hamburger */
+  .close-sidebar-button {
+    display: none;
+  }
+}
+
+/* --- Sidebar Content --- */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 40px; /* Match button height */
+}
+
+.sidebar-button {
+  background: none;
+  border: none;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+}
+.sidebar-button:hover {
+  color: var(--color-foreground);
+  background: var(--color-muted);
+}
+
+.new-chat-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border);
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.conversation-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  /* Hide scrollbar */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.conversation-list::-webkit-scrollbar {
+  display: none;
+}
+.no-conversations {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-muted-foreground);
+}
+
+.conversation-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: var(--color-foreground);
+  text-align: left;
+  font-size: 0.9rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.2s;
+}
+.conversation-item:hover {
+  background: var(--color-muted);
+}
+.conversation-item.active {
+  background: var(--color-sidebar-active);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+
+/* --- Main Chat Header --- */
+.chat-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent; /* Part of the app bg */
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  min-height: 65px; /* Set a min height */
+}
+
+.chat-header-title h1 {
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--color-foreground);
 }
-
-.chat-header p {
-  font-size: 0.875rem;
+.chat-header-title p {
+  font-size: 0.8rem;
   color: var(--color-muted-foreground);
+}
+
+/* Hide hamburger on desktop when sidebar is open */
+@media (min-width: 768px) {
+  .sidebar-open .sidebar-toggle-button {
+    display: none;
+  }
 }
 
 /* --- Message List --- */
@@ -22,7 +196,6 @@
   flex-grow: 1;
   overflow-y: auto;
   padding: 1.5rem;
-  background: #fafafa; /* Slightly off-white */
 }
 
 .message-list {
@@ -30,12 +203,34 @@
   flex-direction: column;
   gap: 1.25rem;
   max-width: 100%;
+  margin: 0 auto;
 }
 
-/* --- Message Bubbles --- */
+/* Center message list content on desktop */
+@media (min-width: 768px) {
+  .message-list {
+     max-width: 800px;
+  }
+}
+
+.welcome-message {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-muted-foreground);
+}
+.welcome-message h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-foreground);
+}
+
+
+/* --- Message Bubbles (Dark Theme) --- */
 .message-wrapper {
   display: flex;
   flex-direction: column;
+  
 }
 
 .message-wrapper.user {
@@ -53,6 +248,7 @@
   line-height: 1.6;
   font-size: 0.9375rem;
   word-wrap: break-word;
+  background-color: rgba(220, 220, 220, 0.155);
 }
 
 .message.user {
@@ -62,9 +258,9 @@
 }
 
 .message.assistant {
-  background-color: var(--color-background);
+  background-color: var(--color-card);
   color: var(--color-foreground);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-card-border);
   border-bottom-left-radius: 0.25rem;
 }
 
@@ -77,15 +273,19 @@
 /* --- Footer & Input Form --- */
 .chat-footer {
   padding: 1rem 1.5rem;
+  padding-top: 1rem;
   border-top: 1px solid var(--color-border);
-  background: var(--color-background);
+  background: transparent; /* Part of the app bg */
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .chat-form {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  max-width: 800px; /* Match message list width on desktop */
+  margin: 0 auto;
 }
 
 .chat-input {
@@ -94,7 +294,7 @@
   padding: 0 1.25rem;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
-  background-color: var(--color-background);
+  background-color: var(--color-card);
   font-size: 1rem;
   font-family: var(--font-family-sans);
   color: var(--color-foreground);
@@ -103,8 +303,9 @@
 
 .chat-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
+  /* border-color: var(--color-primary); */
+  border-color: white;
+  box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
 }
 
 .chat-input::placeholder {
@@ -125,7 +326,8 @@
   width: var(--input-height);
   border-radius: var(--radius);
   border: none;
-  background-color: var(--color-primary);
+  /*background-color: var(--color-primary);*/
+  background-color: rgba(220, 220, 220, 0.155);
   color: var(--color-primary-foreground);
   cursor: pointer;
   flex-shrink: 0;
@@ -142,12 +344,6 @@
 }
 
 /* --- Typing Indicator --- */
-.typing-indicator {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
-}
-
 .typing-indicator span {
   height: 0.5rem;
   width: 0.5rem;
@@ -166,12 +362,20 @@
 }
 
 @keyframes bounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* --- Loading Spinner (for submit button) --- */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
