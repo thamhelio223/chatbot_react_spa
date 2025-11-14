@@ -1,3 +1,6 @@
+/* --- [ALL PREVIOUS STYLES ARE THE SAME] --- */
+/* ... (Layout, Sidebar, Header, Messages, Footer, etc.) ... */
+
 /* --- Layout: Sidebar and Main --- */
 .sidebar {
   width: var(--sidebar-width);
@@ -230,7 +233,6 @@
 .message-wrapper {
   display: flex;
   flex-direction: column;
-  
 }
 
 .message-wrapper.user {
@@ -278,14 +280,18 @@
   background: transparent; /* Part of the app bg */
   z-index: 10;
   flex-shrink: 0;
+  
+  /* This container will now center the suggestions + form */
+  max-width: 800px; 
+  margin: 0 auto;
+  width: 100%;
 }
 
 .chat-form {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  max-width: 800px; /* Match message list width on desktop */
-  margin: 0 auto;
+  width: 100%;
 }
 
 .chat-input {
@@ -303,7 +309,6 @@
 
 .chat-input:focus {
   outline: none;
-  /* border-color: var(--color-primary); */
   border-color: white;
   box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
 }
@@ -326,7 +331,6 @@
   width: var(--input-height);
   border-radius: var(--radius);
   border: none;
-  /*background-color: var(--color-primary);*/
   background-color: rgba(220, 220, 220, 0.155);
   color: var(--color-primary-foreground);
   cursor: pointer;
@@ -378,4 +382,78 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* --- [UPDATED] Suggestion Bar Styles --- */
+
+/* This new container holds the arrows and the bar */
+.suggestion-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding-bottom: 0.75rem; /* 12px space above the input */
+}
+
+.suggestion-bar {
+  display: flex;
+  gap: 0.5rem; /* 8px */
+  overflow-x: auto; /* This enables horizontal scrolling */
+  flex-grow: 1; /* Allows it to fill the space */
+  
+  /* Hide the scrollbar for a cleaner look */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  scroll-behavior: smooth; /* Smooth scrolling for arrows */
+}
+.suggestion-bar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
+.suggestion-chip {
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  font-family: var(--font-family-sans);
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  padding: 0.5rem 0.75rem; /* 8px 12px */
+  border-radius: 9999px; /* Pill shape */
+  cursor: pointer;
+  white-space: nowrap; /* Prevents text from wrapping */
+  transition: all 0.2s ease;
+  flex-shrink: 0; /* Prevents chips from shrinking */
+}
+
+.suggestion-chip:hover {
+  background-color: var(--color-card-border);
+  color: var(--color-foreground);
+  border-color: var(--color-card-border);
+}
+
+/* --- [NEW] Scroll Arrow Button Styles --- */
+.scroll-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem; /* 32px */
+  height: 2rem; /* 32px */
+  border-radius: 50%;
+  background-color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.scroll-arrow:hover:not(:disabled) {
+  background-color: var(--color-card-border);
+  opacity: 1;
+}
+
+.scroll-arrow:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
 }
