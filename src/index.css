@@ -1,27 +1,32 @@
-/* --- 1. CSS Variables (Theming) --- */
+/* --- 1. CSS Variables (Dark Theme) --- */
 :root {
   /* Fonts */
   --font-family-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, Helvetica, Arial, sans-serif;
 
-  /* Colors */
-  --color-background: #ffffff;
-  --color-foreground: #09090b;
+  /* Colors - Dark Theme */
+  --color-background: #0a0a0a; /* True black for the body */
+  --color-app-bg: rgba(16, 16, 18, 0.9); /* Semi-transparent app bg */
+  --color-foreground: #f1f1f1; /* Light text */
+  --color-border: #333338; /* Dark border */
 
-  --color-primary: #1e88e5; /* A nice blue */
-  --color-primary-foreground: #ffffff;
+  --color-primary: #8a2be2; /* BlueViolet for a futuristic feel */
+  --color-primary-foreground: #ffffff; /* White text on primary */
 
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #71717a;
+  --color-muted: #27272a; /* Dark muted background */
+  --color-muted-foreground: #a0a0aab0; /* Lighter muted text */
 
-  --color-border: #e4e4e7;
+  --color-card: #1f1f23; /* Darker card background for chat bubbles */
+  --color-card-border: #3c3c42;
 
-  --color-error: #ef4444;
-  --color-error-foreground: #ffffff;
+  --color-sidebar-bg: #111113;
+  --color-sidebar-border: #2c2c30;
+  --color-sidebar-active: rgba(138, 43, 226, 0.1); /* Light highlight */
 
   /* Sizing & Radius */
-  --radius: 0.75rem; /* 12px */
+  --radius: 0.5rem; /* 8px */
   --input-height: 2.75rem; /* 44px */
+  --sidebar-width: 260px;
 }
 
 /* --- 2. Global Reset --- */
@@ -32,33 +37,59 @@
 }
 
 /* --- 3. Body & App Styles --- */
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   font-family: var(--font-family-sans);
   background-color: var(--color-background);
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* The "Cool Wireframe Background" */
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: center;
 }
 
-/* Make app fill the viewport */
-#root,
+/* This is the main container from App.tsx.
+  It starts centered and constrained.
+*/
 .chat-app-container {
   display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  margin: 0 auto;
+  position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 900px;
+  height: 90vh;
+  margin: 5vh auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+
+  /* This is the key for the v0.dev look: */
+  background-color: var(--color-app-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Limit chat width on desktop */
-@media (min-width: 768px) {
-  #root {
-    max-width: 800px;
-    height: 95vh;
-    margin: 2.5vh auto;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  }
+/* This "interacted" class is added on first submit.
+  It expands the chat to fill the screen.
+*/
+.chat-app-container.interacted {
+  max-width: 100vw;
+  height: 100vh;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
