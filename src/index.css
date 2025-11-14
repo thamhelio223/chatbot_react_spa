@@ -1,0 +1,64 @@
+/* --- 1. CSS Variables (Theming) --- */
+:root {
+  /* Fonts */
+  --font-family-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+
+  /* Colors */
+  --color-background: #ffffff;
+  --color-foreground: #09090b;
+
+  --color-primary: #1e88e5; /* A nice blue */
+  --color-primary-foreground: #ffffff;
+
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+
+  --color-border: #e4e4e7;
+
+  --color-error: #ef4444;
+  --color-error-foreground: #ffffff;
+
+  /* Sizing & Radius */
+  --radius: 0.75rem; /* 12px */
+  --input-height: 2.75rem; /* 44px */
+}
+
+/* --- 2. Global Reset --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* --- 3. Body & App Styles --- */
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Make app fill the viewport */
+#root,
+.chat-app-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Limit chat width on desktop */
+@media (min-width: 768px) {
+  #root {
+    max-width: 800px;
+    height: 95vh;
+    margin: 2.5vh auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  }
+}
